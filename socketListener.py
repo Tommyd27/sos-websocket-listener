@@ -7,18 +7,15 @@ blueScore = {}
 
 players = {'Ron, your worst nightmare_1': {}, 'Tommy_6': {}, 'Yurizan_5': {}, '✪ loftzu_2': {}}
 async def sosLogger():
-	async with websockets.connect("ws://localhost:49122") as websocket:
+	async with websockets.connect("ws://localhost:49122", ping_timeout = 9999) as websocket:
 		#await websocket.send("Hello world!")
-		finish = False
-		while not finish:
+		frame = 0
+		while frame < 9328:
 			rawChunk = json.loads(await websocket.recv())["data"]
-			#print(rawChunk)
 			if "players" in rawChunk:
 				#print("Valid Chunk")
 				rawPlayers = rawChunk["players"]
 				rawGame = rawChunk["game"]
-
-				finish = rawGame["hasWinner"]
 				time = rawGame["elapsed"]
 				frame = rawGame["frame"]
 
@@ -26,16 +23,23 @@ async def sosLogger():
 				if rOrangeScore not in orangeScore:
 					print(f"{rOrangeScore} : {[time, frame]}")
 					orangeScore[rOrangeScore] = [time, frame]
-				rBlueScore = rawGame["teams"][0]["score"]
+				rBlueScore = rawGame["teams"][1]["score"]
 				if rBlueScore not in blueScore:
 					print(f"{rBlueScore} : {[time, frame]}")
 					blueScore[rBlueScore] = [time, frame]
 
 				for player in rawPlayers:
 					players[player][frame] = [time, rawPlayers[player]["score"], rawPlayers[player]["goals"], rawPlayers[player]["saves"], rawPlayers[player]["shots"], rawPlayers[player]["boost"]]
-					print(f'{player}{frame} : {[time, rawPlayers[player]["score"], rawPlayers[player]["goals"], rawPlayers[player]["saves"], rawPlayers[player]["shots"], rawPlayers[player]["boost"]]}')
-			await asyncio.sleep(0.2)
+					print(f'{player} {frame} : {[time, rawPlayers[player]["score"], rawPlayers[player]["goals"], rawPlayers[player]["saves"], rawPlayers[player]["shots"], rawPlayers[player]["boost"]]}')
+			#await asyncio.sleep(0.2)
 asyncio.run(sosLogger())
+
+with open("outputFile.txt", "w") as outputFile:
+	outputFile.write(str(orangeScore))
+	outputFile.write("\n")
+	outputFile.write(str(blueScore))
+	outputFile.write("\n")
+	outputFile.write(str(players).replace("✪", ""))
 
 
 
